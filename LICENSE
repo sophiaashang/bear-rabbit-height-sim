@@ -1,0 +1,22 @@
+熊兔身高模拟器 (bear-rabbit-height-sim)
+Copyright (c) 2026 晚风
+
+本项目采用「知识共享 署名-非商业性使用 4.0 国际」许可协议（CC BY-NC 4.0）授权。
+This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+你可以 / You are free to:
+  - 共享：以任何媒介或格式复制、发行本作品 (Share)
+  - 演绎：修改、转换或基于本作品创作 (Adapt)
+
+惟须遵守 / Under the following terms:
+  - 署名 (Attribution)：注明作者「晚风」，提供许可协议链接，并说明是否作了修改。
+  - 非商业性使用 (NonCommercial)：不得将本作品用于商业目的。
+  - 没有附加限制：不得附加法律条款或技术措施，限制他人行使本许可授予的权利。
+
+完整条款 / Full legal text：
+  https://creativecommons.org/licenses/by-nc/4.0/legalcode
+  https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hans
+
+第三方部分不适用上述许可，遵循各自条款：three.js（MIT）、手/脚轮廓路径（来源条款禁止营利商用）。
+详见 THIRD_PARTY_NOTICES.md。
+Third-party components are covered by their own terms; see THIRD_PARTY_NOTICES.md.

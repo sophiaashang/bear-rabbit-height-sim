@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<title>熊兔模拟器</title>
+<style>
+:root{--ink:#343846;--mute:#7a8090;--line:#e6e8ee;--accent:#e0708a;--bg:#ffffff;--card:#ffffffee;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:14px/1.45 "PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block}
+.label{position:fixed;left:0;top:0;pointer-events:none;white-space:nowrap;font-weight:600;font-size:13px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.82);color:#4b5060;box-shadow:0 1px 4px rgba(60,66,90,.12);will-change:transform}
+#hud{position:fixed;left:250px;right:0;top:0;padding:calc(10px + var(--safe-t)) 12px 0;display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+/* 手机：说明卡放到姿势标题栏下面、占满宽度，不再被挤成一字一行 */
+@media(max-width:480px){#hud{left:0;padding-top:calc(58px + var(--safe-t))}}
+#info{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;pointer-events:auto;backdrop-filter:blur(6px)}
+#info .big{font-size:20px;font-weight:700}
+#info .big small{display:block;font-size:12px;font-weight:500;color:var(--mute);margin:1px 0 0;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
+#quote{color:var(--mute);font-size:13px;margin-top:2px}
+#tools{display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+.tb{min-width:44px;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;padding:0 12px;cursor:pointer;backdrop-filter:blur(6px)}
+.tb:hover{border-color:#cfd3dd}
+.tb:focus-visible,.pitem:focus-visible,.gbtn:focus-visible,.sw:focus-visible,.segbtn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 姿势面板：左侧浮层，卡片网格（图标 + 名字），选中态用主色渐变 */
+#posePanel{position:fixed;left:10px;top:calc(10px + var(--safe-t));width:230px;max-height:calc(100vh - 20px - var(--safe-b));max-height:calc(100dvh - 20px - var(--safe-b));display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(40,44,60,.12);backdrop-filter:blur(8px);z-index:4;transition:transform .25s ease,opacity .25s ease;pointer-events:auto}
+#posePanel.collapsed{transform:translateX(-6px)}
+#poseHead{display:flex;align-items:center;gap:7px;padding:10px 11px 8px;cursor:pointer;user-select:none;border-bottom:1px solid var(--line)}
+#poseHead .brand{font-size:15px;letter-spacing:-1px}
+#poseHead b{font-size:13.5px;flex:1;letter-spacing:.2px}
+#poseHead .cnt{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+#poseToggle{width:24px;height:24px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;line-height:1;cursor:pointer;padding:0}
+#posePanel.collapsed #poses,#posePanel.collapsed #groups{display:none}
+#posePanel.collapsed #poseHead{border-bottom:0}
+/* 分类 pill */
+#groups{display:flex;gap:5px;flex-wrap:wrap;padding:8px 10px 2px}
+.gbtn{min-height:26px;padding:0 11px;border-radius:13px;border:1px solid var(--line);background:#fff;color:var(--mute);font:inherit;font-size:11.5px;cursor:pointer;transition:background .14s,color .14s,border-color .14s}
+.gbtn:hover{border-color:#cfd3dd;color:var(--ink)}
+.gbtn[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(224,112,138,.32)}
+/* 卡片网格 */
+#poses{overflow-y:auto;padding:6px 9px 11px;display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:start;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#cfd3dd transparent}
+#poses::-webkit-scrollbar{width:5px}
+#poses::-webkit-scrollbar-thumb{background:#cfd3dd;border-radius:3px}
+.pitem{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:63px;padding:6px 3px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f7f8fb);color:var(--ink);font:inherit;font-size:11.5px;line-height:1.18;cursor:pointer;text-align:center;width:100%;box-shadow:0 1px 2px rgba(60,66,90,.05);transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+.pitem .ic{font-size:19px;line-height:1;filter:saturate(1.08)}
+.pitem .nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pitem:hover{border-color:#cfd3dd;box-shadow:0 4px 12px rgba(60,66,90,.1);transform:translateY(-1px)}
+.pitem:active{transform:scale(.97)}
+.pitem[aria-pressed=true]{background:linear-gradient(160deg,var(--accent),#c9536e);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(224,112,138,.36)}
+.pitem[hidden]{display:none}
+@media(max-width:480px){#posePanel{width:190px;left:8px;top:calc(8px + var(--safe-t))}#poseHead{padding:8px 9px 7px}#groups{padding:6px 8px 2px}.gbtn{min-height:24px;padding:0 9px;font-size:11px}#poses{gap:6px;padding:5px 7px 9px}.pitem{min-height:57px;font-size:11px}.pitem .ic{font-size:17px}}
+/* 底部：只留「调整两人」按钮 */
+#dock{position:fixed;left:0;right:0;bottom:0;padding:0 0 calc(12px + var(--safe-b));display:flex;justify-content:center;pointer-events:none}
+#settingsBtn{pointer-events:auto;background:var(--accent);color:#fff;border:0;font-weight:600;padding:0 24px;box-shadow:0 6px 18px rgba(224,112,138,.35)}
+#panel{position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow:auto;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(40,44,60,.18);padding:14px 14px calc(18px + var(--safe-b));transform:translateY(105%);transition:transform .28s ease;z-index:5}
+#panel.open{transform:none}
+#panelHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#panelHead b{font-size:16px}
+#cards{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:720px){#cards{grid-template-columns:1fr 1fr}#panel{left:50%;right:auto;width:720px;transform:translate(-50%,105%)}#panel.open{transform:translateX(-50%)}}
+.card{border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card label,.lbl{display:block;margin:8px 0 4px;color:var(--mute);font-size:12px}
+.card input[type=text],.card input[type=number]{width:100%;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;color:var(--ink)}
+.hrow{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}
+.hrow.two{grid-template-columns:1fr 1fr}
+.hrow.two label{display:grid;grid-template-columns:34px 1fr;gap:6px;align-items:center;font:inherit;color:var(--ink);font-size:12px}
+.hrow input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.segbtn{min-height:38px;padding:0 14px;border-radius:19px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+.segbtn[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sw{width:32px;height:32px;border-radius:16px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--ink)}
+.colorpick{width:36px;height:36px;padding:0;border:0;background:none;cursor:pointer}
+#toast{position:fixed;left:50%;top:calc(70px + var(--safe-t));transform:translate(-50%,-8px);background:var(--ink);color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:9;max-width:88vw;text-align:center}
+#toast.show{opacity:.94;transform:translate(-50%,0)}
+#busy{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(52,56,70,.82);color:#fff;padding:8px 16px;border-radius:16px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .15s .12s}
+#busy.show{opacity:1}
+@media(max-width:480px){.tb{min-width:40px;min-height:40px;font-size:12px;padding:0 9px}#info .big{font-size:17px}#info{padding:6px 10px}#quote{font-size:12px}}
+@media(prefers-reduced-motion:reduce){#panel,#toast{transition:none}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="3D 场景，可拖拽旋转" role="img"></div>
+<div class="label" id="labelA"></div><div class="label" id="labelB"></div>
+<div id="hud">
+  <div id="info" aria-live="polite">
+    <div class="big">身高差 <span id="diffNum">0</span> cm<small id="poseName"></small></div>
+    <div id="quote"></div>
+  </div>
+  <div id="tools">
+    <button class="tb" id="shotBtn" type="button">截图</button>
+    <button class="tb" id="linkBtn" type="button">复制链接</button>
+    <button class="tb" id="viewBtn" type="button">视角：全景</button>
+    <button class="tb" id="resetBtn" type="button">复位</button>
+  </div>
+</div>
+<aside id="posePanel">
+  <div id="poseHead" role="button" tabindex="0" aria-label="收起或展开姿势列表"><span class="brand">🐻🐰</span><b>姿势</b><span class="cnt" id="poseCnt"></span><button id="poseToggle" type="button" aria-label="收起">‹</button></div>
+  <div id="groups" role="group" aria-label="姿势分类"></div>
+  <div id="poses" role="group" aria-label="姿势列表"></div>
+</aside>
+<div id="dock">
+  <button class="tb" id="settingsBtn" type="button" aria-expanded="false" aria-controls="panel">调整两人</button>
+</div>
+<div id="panel" role="dialog" aria-label="调整两人">
+  <div id="panelHead"><b>调整两人</b><button class="tb" id="panelClose" type="button">收起</button></div>
+  <div id="cards"></div>
+</div>
+<div id="toast" role="status"></div>
+<div id="busy" aria-hidden="true">摆姿势中…</div>
+<script>/*__APP__*/</script>
+</body>
+</html>

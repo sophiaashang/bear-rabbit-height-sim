@@ -1,0 +1,15 @@
+{
+  "name": "bear-rabbit-height-sim",
+  "version": "1.0.0",
+  "description": "熊兔身高模拟器：用高个熊和矮个兔两个积木人偶比身高差、比手比脚，单文件网页，断网可玩。",
+  "license": "CC-BY-NC-4.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "esbuild": "0.24.0",
+    "three": "0.170.0"
+  }
+}
